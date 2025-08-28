@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Man Cave Live Scores</title>
+<style>
+  body {
+    margin: 0;
+    background: #000;
+    color: #0f0;
+    font-family: Arial, sans-serif;
+    overflow: hidden;
+  }
+  h1 {
+    font-size: 3em;
+    margin: 20px 0;
+    text-align: center;
+  }
+  .league-title {
+    font-size: 2em;
+    margin: 20px 0;
+    text-align: center;
+    color: #fff;
+  }
+  .scores-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: start;
+    width: 100%;
+  }
+  .game {
+    display: flex;
+    align-items: center;
+    justify-content: space-around;
+    width: 90%;
+    margin: 20px 0;
+    font-size: 1.8em;
+  }
+  .team {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 200px;
+  }
+  .team img {
+    max-width: 100px;
+    height: auto;
+    margin-bottom: 10px;
+  }
+  .score {
+    font-size: 2em;
+    font-weight: bold;
+    width: 200px;
+    text-align: center;
+  }
+</style>
+</head>
+<body>
+<h1>Man Cave Live Scores</h1>
+<div id="scores" class="scores-container">Loading...</div>
+
+<script>
+const API_KEY = '123'; // Your TheSportsDB API key
+const LEAGUES = ['NFL','MLB','NCAAF']; // Rotating leagues: NFL, MLB, FBS College Football
+let currentLeagueIndex = 0;
+
+async function loadScores() {
+  const league = LEAGUES[currentLeagueIndex];
+  const scoresDiv = document.getElementById('scores');
+  scoresDiv.innerHTML = `<div class="league-title">${league} Live Scores</div>`;
+
+  try {
+    const res = await fetch(`https://www.thesportsdb.com/api/v1/json/${API_KEY}/livescore.php?l=${league}`);
+    const data = await res.json();
+
+    if (data.events) {
+      for (const event of data.events) {
+        const div = document.createElement('div');
+        div.className = 'game';
+
+        const homeTeam = document.createElement('div');
+        homeTeam.className = 'team';
+        homeTeam.innerHTML = `<img src="${event.strHomeTeamBadge || ''}" alt="Home Logo"><div>${event.strHomeTeam}</div>`;
+
+        const awayTeam = document.createElement('div');
+        awayTeam.className = 'team';
+        awayTeam.innerHTML = `<img src="${event.strAwayTeamBadge || ''}" alt="Away Logo"><div>${event.strAwayTeam}</div>`;
+
+        const score = document.createElement('div');
+        score.className = 'score';
+        score.textContent = `${event.intHomeScore ?? 0} - ${event.intAwayScore ?? 0}`;
+
+        div.appendChild(homeTeam);
+        div.appendChild(score);
+        div.appendChild(awayTeam);
+        scoresDiv.appendChild(div);
+      }
+    } else {
+      scoresDiv.innerHTML += '<p style="font-size:1.5em;color:#777;">No live games right now.</p>';
+    }
+  } catch (err) {
+    scoresDiv.innerHTML = '<p style="color:red;">Error fetching scores. Check API key or connection.</p>';
+  }
+
+  currentLeagueIndex = (currentLeagueIndex + 1) % LEAGUES.length;
+}
+
+loadScores();
+setInterval(loadScores, 60000); // Refresh every 60 seconds
+</script>
+</body>
+</html>
